@@ -1,0 +1,73 @@
+name: Build Windows Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Set release version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          $version = $env:RELEASE_TAG -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+([-.+].*)?$') {
+            throw "Release tag '$env:RELEASE_TAG' is not a valid semver tag. Use a tag such as v1.2.3."
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build Tauri application
+        shell: pwsh
+        run: |
+          @{ version = $env:VERSION } | ConvertTo-Json -Compress | Set-Content -Path tauri-version.json -Encoding utf8
+          pnpm tauri build --config tauri-version.json
+
+      - name: Collect release assets
+        shell: pwsh
+        run: |
+          $assets = "release-assets"
+          New-Item -ItemType Directory -Path $assets -Force | Out-Null
+
+          $exe = Get-Item "src-tauri/target/release/sensitivex.exe"
+          Copy-Item $exe.FullName "$assets/SensitiveX-$env:VERSION-windows-x64.exe"
+
+          $msi = Get-ChildItem "src-tauri/target/release/bundle/msi" -Filter "*.msi" | Select-Object -First 1
+          if ($null -eq $msi) {
+            throw "The Tauri build did not produce an MSI package."
+          }
+          Copy-Item $msi.FullName "$assets/SensitiveX-$env:VERSION-windows-x64.msi"
+
+      - name: Upload assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: release-assets/*
