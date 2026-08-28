@@ -63,14 +63,14 @@ function statusClass(status) {
                     </div>
                 </dl>
             </div>
-            <div class="p-4 sm:col-span-2 sm:p-6 lg:col-span-2">
+            <div class="min-w-0 p-4 sm:col-span-2 sm:p-6 lg:col-span-2">
                 <h3
                     class="mb-3 text-xs font-semibold tracking-wider text-slate-600"
                 >
                     RESPONSE BODY
                 </h3>
                 <pre
-                    class="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100"
+                    class="max-h-[32rem] overflow-auto whitespace-pre-wrap break-all bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100"
                     >{{ formattedBody || "响应正文为空" }}</pre>
             </div>
         </div>
