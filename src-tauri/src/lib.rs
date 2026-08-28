@@ -29,6 +29,7 @@ struct ApiResponse {
     status_text: String,
     elapsed_ms: u128,
     headers: Vec<HeaderEntry>,
+    mime: String,
     body: String,
 }
 
@@ -83,6 +84,14 @@ fn request_api(request: ApiRequest) -> Result<ApiResponse, String> {
         .send()
         .map_err(|error| format!("Request failed: {error}"))?;
     let status = response.status();
+    let mime = response
+        .headers()
+        .get(CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(';').next())
+        .unwrap_or("")
+        .trim()
+        .to_ascii_lowercase();
     let response_headers = response
         .headers()
         .iter()
@@ -103,6 +112,7 @@ fn request_api(request: ApiRequest) -> Result<ApiResponse, String> {
         status_text: status.canonical_reason().unwrap_or("Unknown").to_string(),
         elapsed_ms: started_at.elapsed().as_millis(),
         headers: response_headers,
+        mime,
         body,
     })
 }

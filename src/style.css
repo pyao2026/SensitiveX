@@ -1,1 +1,11 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
+
+.response-code-line-number {
+    flex: 0 0 3.5rem;
+    width: 3.5rem;
+    margin-right: 1rem;
+    color: #64748b;
+    text-align: right;
+    user-select: none;
+}
