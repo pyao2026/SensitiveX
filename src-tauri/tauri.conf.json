@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schema.tauri.app/config/2",
+    "productName": "sensitivex",
+    "version": "0.1.0",
+    "identifier": "top.patrickyao.sensitivex",
+    "build": {
+        "beforeDevCommand": "pnpm fe:dev",
+        "devUrl": "http://localhost:1420",
+        "beforeBuildCommand": "pnpm fe:build",
+        "frontendDist": "../dist"
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "sensitivex",
+                "width": 800,
+                "height": 600
+            }
+        ],
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": ["msi"],
+        "icon": ["icons/32x32.png", "icons/128x128.png"]
+    }
+}
