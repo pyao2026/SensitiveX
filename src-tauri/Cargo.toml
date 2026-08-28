@@ -1,6 +1,6 @@
 [package]
 name = "sensitivex"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sensitive X | 基于 Vue.JS + TailwindCSS + Tauri 的本地API Debug一体化平台"
 authors = ["Patrick Yao"]
 edition = "2021"

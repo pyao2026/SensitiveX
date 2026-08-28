@@ -1,7 +1,7 @@
 {
     "name": "sensitivex",
     "private": true,
-    "version": "0.1.0",
+    "version": "0.1.1",
     "type": "module",
     "scripts": {
         "fe:dev": "vite",
@@ -10,7 +10,8 @@
         "build": "tauri build",
         "fe:fmt": "prettier src/ --write",
         "ta:fmt": "cd src-tauri && cargo fmt",
-        "fmt": "pnpm run fe:fmt && pnpm run ta:fmt"
+        "fmt": "pnpm run fe:fmt && pnpm run ta:fmt",
+        "clean": "node _clean.js"
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.3.3",
