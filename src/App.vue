@@ -1,161 +1,114 @@
 <script setup>
 import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import RequestEditor from "./components/RequestEditor.vue";
+import ResponsePanel from "./components/ResponsePanel.vue";
 
-const greetMsg = ref("");
-const name = ref("");
+const method = ref("GET");
+const url = ref("");
+const headers = ref([{ name: "", value: "" }]);
+const body = ref("{\n  \n}");
+const isSending = ref(false);
+const error = ref("");
+const response = ref(null);
 
-async function greet() {
-    greetMsg.value = await invoke("greet", { name: name.value });
+function addHeader() {
+    headers.value.push({ name: "", value: "" });
+}
+
+function removeHeader(index) {
+    headers.value.splice(index, 1);
+}
+
+async function sendRequest() {
+    error.value = "";
+    response.value = null;
+
+    if (!url.value.trim()) {
+        error.value = "请输入请求地址。";
+        return;
+    }
+
+    const activeHeaders = headers.value
+        .filter((header) => header.name.trim() || header.value.trim())
+        .map((header) => ({ name: header.name.trim(), value: header.value }));
+
+    if (activeHeaders.some((header) => !header.name)) {
+        error.value = "每个请求头都需要提供名称。";
+        return;
+    }
+
+    const requestBody = method.value === "POST" ? body.value.trim() : "";
+    if (requestBody) {
+        try {
+            JSON.parse(requestBody);
+        } catch {
+            error.value = "请求体必须是有效的 JSON。";
+            return;
+        }
+    }
+
+    isSending.value = true;
+    try {
+        response.value = await invoke("request_api", {
+            request: {
+                method: method.value,
+                url: url.value.trim(),
+                headers: activeHeaders,
+                body: requestBody || null,
+            },
+        });
+    } catch (requestError) {
+        error.value = String(requestError);
+    } finally {
+        isSending.value = false;
+    }
 }
 </script>
 
 <template>
-    <main class="container">
-        <h1>Welcome to Tauri + Vue</h1>
+    <main
+        class="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 sm:px-8 sm:py-10"
+    >
+        <div class="mx-auto max-w-6xl">
+            <header
+                class="mb-6 flex items-end justify-between border-b border-slate-300 pb-4"
+            >
+                <div>
+                    <p
+                        class="mb-1 text-xs font-semibold tracking-[0.18em] text-teal-700"
+                    >
+                        SENSITIVE X
+                    </p>
+                    <h1 class="text-2xl font-semibold tracking-wide">
+                        API Console
+                    </h1>
+                </div>
+                <p class="hidden text-sm text-slate-500 sm:block">
+                    本地请求调试工具
+                </p>
+            </header>
 
-        <div class="row">
-            <a href="https://vite.dev" target="_blank">
-                <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-            </a>
-            <a href="https://tauri.app" target="_blank">
-                <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-            </a>
-            <a href="https://vuejs.org/" target="_blank">
-                <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-            </a>
-        </div>
-        <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
-
-        <form class="row" @submit.prevent="greet">
-            <input
-                id="greet-input"
-                v-model="name"
-                placeholder="Enter a name..."
+            <RequestEditor
+                v-model:method="method"
+                v-model:url="url"
+                v-model:body="body"
+                :headers="headers"
+                :is-sending="isSending"
+                @add-header="addHeader"
+                @remove-header="removeHeader"
+                @submit="sendRequest"
             />
-            <button type="submit">Greet</button>
-        </form>
-        <p>{{ greetMsg }}</p>
+
+            <p
+                v-if="error"
+                class="mt-4 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                role="alert"
+            >
+                {{ error }}
+            </p>
+
+            <ResponsePanel v-if="response" :response="response" />
+        </div>
     </main>
 </template>
-
-<style scoped>
-.logo.vite:hover {
-    filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-    filter: drop-shadow(0 0 2em #249b73);
-}
-</style>
-<style>
-:root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 400;
-
-    color: #0f0f0f;
-    background-color: #f6f6f6;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
-}
-
-.container {
-    margin: 0;
-    padding-top: 10vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-}
-
-.logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: 0.75s;
-}
-
-.logo.tauri:hover {
-    filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-    display: flex;
-    justify-content: center;
-}
-
-a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
-}
-
-a:hover {
-    color: #535bf2;
-}
-
-h1 {
-    text-align: center;
-}
-
-input,
-button {
-    border-radius: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    color: #0f0f0f;
-    background-color: #ffffff;
-    transition: border-color 0.25s;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-    cursor: pointer;
-}
-
-button:hover {
-    border-color: #396cd8;
-}
-button:active {
-    border-color: #396cd8;
-    background-color: #e8e8e8;
-}
-
-input,
-button {
-    outline: none;
-}
-
-#greet-input {
-    margin-right: 5px;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        color: #f6f6f6;
-        background-color: #2f2f2f;
-    }
-
-    a:hover {
-        color: #24c8db;
-    }
-
-    input,
-    button {
-        color: #ffffff;
-        background-color: #0f0f0f98;
-    }
-    button:active {
-        background-color: #0f0f0f69;
-    }
-}
-</style>
