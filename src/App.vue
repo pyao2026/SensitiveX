@@ -101,7 +101,7 @@ async function saveRequest() {
                     url: url.value.trim(),
                     headers: headers.value,
                     body:
-                        method.value === "POST"
+                        method.value !== "GET"
                             ? body.value.trim() || null
                             : null,
                 },
@@ -130,7 +130,7 @@ async function sendRequest() {
         error.value = "每个请求头都需要提供名称。";
         return;
     }
-    const requestBody = method.value === "POST" ? body.value.trim() : "";
+    const requestBody = method.value !== "GET" ? body.value.trim() : "";
     if (requestBody) {
         try {
             JSON.parse(requestBody);

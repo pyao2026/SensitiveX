@@ -38,6 +38,9 @@ const emit = defineEmits([
                 >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
                 </select>
                 <input
                     id="request-url"
@@ -118,9 +121,9 @@ const emit = defineEmits([
                     </h2>
                     <span class="text-xs text-slate-400">
                         {{
-                            method === "POST"
+                            method !== "GET"
                                 ? "application/json"
-                                : "GET 请求不发送正文"
+                                : `${method} 请求不发送正文`
                         }}
                     </span>
                 </div>

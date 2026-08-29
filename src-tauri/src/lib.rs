@@ -240,7 +240,10 @@ fn request_api(request: ApiRequest) -> Result<ApiResponse, String> {
     let method = match request.method.as_str() {
         "GET" => Method::GET,
         "POST" => Method::POST,
-        _ => return Err("Only GET and POST requests are supported.".into()),
+        "PUT" => Method::PUT,
+        "PATCH" => Method::PATCH,
+        "DELETE" => Method::DELETE,
+        _ => return Err("Only GET, POST, PUT, PATCH, and DELETE requests are supported.".into()),
     };
 
     let url = reqwest::Url::parse(&request.url)
@@ -258,7 +261,7 @@ fn request_api(request: ApiRequest) -> Result<ApiResponse, String> {
         headers.append(name, value);
     }
 
-    let body = if method == Method::POST {
+    let body = if method != Method::GET {
         let body = request.body.unwrap_or_default();
         if !body.trim().is_empty() {
             serde_json::from_str::<serde_json::Value>(&body)
