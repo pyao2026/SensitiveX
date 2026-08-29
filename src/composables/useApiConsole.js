@@ -1,6 +1,7 @@
 import { computed, onMounted, ref } from "vue";
 import {
     createSavedRequest,
+    deleteSavedRequest,
     getSavedRequest,
     listSavedRequests,
     saveSavedRequest,
@@ -10,7 +11,8 @@ import { validateRequest } from "../utils/validateRequest";
 
 const emptyHeaders = () => [{ name: "", value: "" }];
 
-export function useApiConsole() {
+export function useApiConsole(projectId) {
+    const scopedProjectId = Number(projectId);
     const method = ref("GET");
     const url = ref("");
     const headers = ref(emptyHeaders());
@@ -55,7 +57,7 @@ export function useApiConsole() {
     }
 
     async function refreshList() {
-        savedRequests.value = await listSavedRequests();
+        savedRequests.value = await listSavedRequests(scopedProjectId);
     }
 
     function confirmDiscard() {
@@ -68,7 +70,7 @@ export function useApiConsole() {
     async function selectRequest(id) {
         if (id === currentId.value || !confirmDiscard()) return;
         try {
-            loadRequest(await getSavedRequest(id));
+            loadRequest(await getSavedRequest(scopedProjectId, id));
         } catch (requestError) {
             error.value = String(requestError);
         }
@@ -77,7 +79,7 @@ export function useApiConsole() {
     async function createRequest() {
         if (!confirmDiscard()) return;
         try {
-            const request = await createSavedRequest();
+            const request = await createSavedRequest(scopedProjectId);
             await refreshList();
             loadRequest(request);
         } catch (requestError) {
@@ -91,6 +93,7 @@ export function useApiConsole() {
         isSaving.value = true;
         try {
             const request = await saveSavedRequest({
+                projectId: scopedProjectId,
                 id: currentId.value,
                 name: name.value || "未命名请求",
                 request: {
@@ -136,11 +139,44 @@ export function useApiConsole() {
         }
     }
 
+    async function removeRequest() {
+        if (
+            currentId.value === null ||
+            !window.confirm("确定删除当前接口吗？")
+        ) {
+            return;
+        }
+        error.value = "";
+        try {
+            await deleteSavedRequest(scopedProjectId, currentId.value);
+            await refreshList();
+            if (savedRequests.value.length) {
+                loadRequest(
+                    await getSavedRequest(
+                        scopedProjectId,
+                        savedRequests.value[0].id,
+                    ),
+                );
+            } else {
+                currentId.value = null;
+                savedSnapshot.value = "";
+                response.value = null;
+            }
+        } catch (requestError) {
+            error.value = String(requestError);
+        }
+    }
+
     onMounted(async () => {
         try {
             await refreshList();
             if (savedRequests.value.length) {
-                loadRequest(await getSavedRequest(savedRequests.value[0].id));
+                loadRequest(
+                    await getSavedRequest(
+                        scopedProjectId,
+                        savedRequests.value[0].id,
+                    ),
+                );
             }
         } catch (loadError) {
             error.value = String(loadError);
@@ -167,5 +203,6 @@ export function useApiConsole() {
         createRequest,
         saveRequest,
         sendRequest,
+        removeRequest,
     };
 }
