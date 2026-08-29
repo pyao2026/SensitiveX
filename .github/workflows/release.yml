@@ -49,7 +49,7 @@ jobs:
         shell: pwsh
         run: |
           @{ version = $env:VERSION } | ConvertTo-Json -Compress | Set-Content -Path tauri-version.json -Encoding utf8
-          pnpm tauri build --config tauri-version.json
+          pnpm run build-final -- --config tauri-version.json
 
       - name: Collect release assets
         shell: pwsh
