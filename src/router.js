@@ -1,15 +1,17 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import ProjectListPage from "./pages/ProjectListPage.vue";
-import ApiConsolePage from "./pages/ApiConsolePage.vue";
 
 export const router = createRouter({
     history: createWebHashHistory(),
     routes: [
-        { path: "/", name: "projects", component: ProjectListPage },
+        {
+            path: "/",
+            name: "projects",
+            component: () => import("./pages/ProjectListPage.vue"),
+        },
         {
             path: "/projects/:projectId",
             name: "api-console",
-            component: ApiConsolePage,
+            component: () => import("./pages/ApiConsolePage.vue"),
             props: true,
         },
     ],
