@@ -31,8 +31,13 @@ jobs:
         with:
           toolchain: stable-x86_64-pc-windows-msvc
 
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Set release version
         shell: pwsh
@@ -49,7 +54,7 @@ jobs:
         shell: pwsh
         run: |
           @{ version = $env:VERSION } | ConvertTo-Json -Compress | Set-Content -Path tauri-version.json -Encoding utf8
-          pnpm tauri build --config tauri-version.json
+          pnpm run build-final -- --config tauri-version.json
 
       - name: Collect release assets
         shell: pwsh
